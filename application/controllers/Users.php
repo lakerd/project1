@@ -10,13 +10,15 @@ class Users extends CI_Controller {
     public function index() {
         $user = $this->session->user;
         if ($user) {
-            $view = $user->is_admin ? 'admin' : $user;
+            $view = $user->is_admin ? 'admin' : 'user';
+            $cap = $this->create_captcha();
             $data['user'] = $user;
+            $data['cap_img'] = $cap['image'];
             $this->load->view('header');
             $this->load->view($view, $data);
             $this->load->view('footer');
             return;
-        } 
+        }
 
         $this->form_validation->set_rules('username', 'Username', 'required');
         $this->form_validation->set_rules('password', 'Password', 'required');
@@ -29,28 +31,13 @@ class Users extends CI_Controller {
         }
         $username = $this->input->post('username');
         $password = $this->input->post('password');
-        $u = $this->users_model->login($username, $password);
-        if ($u !== NULL) {
-            $vals = array(
-                'img_path'      => './captcha/',
-                'img_url'       => 'http://example.com/captcha/'
-            );
-
-            $cap = create_captcha($vals);
-            print_r($cap);
-            $data = array(
-                'captcha_time'  => $cap['time'],
-                'ip_address'    => $this->input->ip_address(),
-                'word'          => $cap['word']
-            );
-
-            $query = $this->db->insert_string('captcha', $data);
-            $this->db->query($query);
-
-            $this->session->set_userdata('user', $u);
-            $data['user'] = $u;
-            $data['cap'] = $cap;
-            $view = $u->is_admin ? 'admin' : 'user';
+        $user = $this->users_model->login($username, $password);
+        if ($user !== NULL) {
+            $cap = $this->create_captcha();
+            $this->session->set_userdata('user', $user);
+            $data['user'] = $user;
+            $data['cap_img'] = $cap['image'];
+            $view = $user->is_admin ? 'admin' : 'user';
             $this->load->view('header');
             $this->load->view($view, $data);
             $this->load->view('footer');
@@ -128,18 +115,30 @@ class Users extends CI_Controller {
         if (!$this->session->user)
             show_404();
         $this->form_validation->set_rules('egn', 'EGN', 'required');
+        $this->form_validation->set_rules('captcha_word', 'Captcha', 'required');
         $this->form_validation->set_rules('egn', 'EGN', 'callback_egn_check');
         if ($this->form_validation->run() === FALSE) {
             $this->index();
             return;
         }
+
+        $this->captcha_model->delete_expired();
+        $captcha_word = $this->input->post('captcha_word');
+        $ip_addr = $this->input->ip_address();
+        $captcha = $this->captcha_model->exists($captcha_word, $ip_addr);
+
+        if (!$captcha) {
+            $this->session->set_flashdata('msg', 'Невалидна captcha.');
+            $this->index();
+            return;
+        }
+
         $egn = $this->input->post('egn');
         $user_id = $this->session->user->id;
-        $ip_addr = $this->input->ip_address();
         if (!$this->egn_model->egn_exists($egn)) {
             $msg = 'Това е първа зявка за ЕГН: ' . $egn;
             $color = 'green';
-        } else { 
+        } else {
             $n = $this->egn_model->searched_in_3mo($egn);
             if ($n === 0) {
                 $msg = 'В последните 3 месеца не е постъпвала заявка за ЕГН: ' . $egn;
@@ -176,5 +175,26 @@ class Users extends CI_Controller {
             return TRUE;
         $this->form_validation->set_message('egn_check', 'Невалидно ЕГН.');
         return FALSE;
+    }
+
+    private function create_captcha() {
+        $vals = array(
+            'img_path' => './captcha/',
+            'img_url' => base_url() . 'captcha/',
+            'img_width' => 150,
+            'img_height' => 100,
+            'expiration' => 7200
+        );
+
+        $cap = create_captcha($vals);
+        $cap_data = array(
+            'captcha_time'  => $cap['time'],
+            'ip_address'    => $this->input->ip_address(),
+            'word'          => $cap['word']
+        );
+
+        $query = $this->db->insert_string('captcha', $cap_data);
+        $this->db->query($query);
+        return $cap;
     }
 }

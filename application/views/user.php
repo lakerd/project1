@@ -15,8 +15,10 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 ЕГН <input type="text" name="egn" value="<?= set_value('egn'); ?>" />
 <br />
-
-<input type="text" name="captcha" value="" />
+Captcha <input type="text" name="captcha_word" value="" />
+<br />
+<?= $cap_img; ?>
+<br />
 <input type="submit" name="submit" value="Търси" />
 </form>
 

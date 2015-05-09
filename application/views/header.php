@@ -5,15 +5,15 @@
 <?php
     $user = $this->session->user;
     if ($user) { 
-        echo '<ul>';
         if ($user->is_admin) {
-            echo '
-                <li><a href="/users">Начало</a></li>
-                <li><a href="/users/create">Създаване на нов потребител</a></li>
-                <li><a href="/users/edit">Променя на потребител</a></li>
-            ';
+            echo anchor('users', 'Начало');
+            echo '<br />';
+            echo anchor('users/create', 'Създаване на нов потребител');
+            echo '<br />';
+            echo anchor('users/edit', 'Променя на потребител');
+            echo '<br />';
         }
-        echo '<li><a href="/users/logout">Изход</a></li>';
-        echo '</ul>';
+        echo anchor('users/logout', 'Изход');
     }
 ?>
+<br />
