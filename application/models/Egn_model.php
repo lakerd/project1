@@ -36,4 +36,16 @@ class Egn_model extends CI_Model {
         $q = $this->db->select('egn')->get('egn_log');
         return $q->num_rows();
     }
+
+    public function find($egn) {
+        $q = $this->db
+            ->join('users', 'users.id = egn_log.user_id')
+            ->order_by('created_on', 'DESC')
+            ->get_where('egn_log', array('egn' => $egn));
+        $ret = array();
+        foreach ($q->result() as $row) {
+            $ret[] = $row;
+        }
+        return $ret;
+    }
 }

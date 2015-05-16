@@ -10,12 +10,18 @@ class Users extends CI_Controller {
     public function index() {
         if ($this->session->user) {
             $user = $this->session->user;
-            $view = $user->is_admin ? 'admin' : 'user';
             $cap = $this->create_captcha();
             $data['user'] = $user;
             $data['cap_img'] = $cap['image'];
             $this->load->view('header');
-            $this->load->view($view, $data);
+            $this->load->view('user', $data);
+            if ($user->is_admin) {
+                $egn = $this->session->userdata('egn');
+                if (isset($egn)) {
+                    $logs = $this->egn_model->find($egn);
+                    $this->load->view('egn_log', array('logs' => $logs));
+                }
+            }
             $this->load->view('footer');
             return;
         }
@@ -37,9 +43,8 @@ class Users extends CI_Controller {
             $this->session->set_userdata('user', $user);
             $data['user'] = $user;
             $data['cap_img'] = $cap['image'];
-            $view = $user->is_admin ? 'admin' : 'user';
             $this->load->view('header');
-            $this->load->view($view, $data);
+            $this->load->view('user', $data);
             $this->load->view('footer');
         } else {
             $this->session->set_flashdata('msg', 'Невалидно потребителско име или парола.');
@@ -75,7 +80,17 @@ class Users extends CI_Controller {
         }
     }
 
+    public function post_delete() {
+        $this->verify_admin();
+        $id = $this->input->post('id');
+        $success = $this->users_model->delete_user($id);
+        $msg = $success ? 'Потребителят беше изтрит успешно.' : 'Грешка при изтриването!';
+        $this->session->set_flashdata('msg', $msg);
+        redirect('/users/edit');
+    }
+
     private function post_edit_search() {
+        $this->verify_admin();
         $this->form_validation->set_rules('username', 'Потребителско име',
             'required');
         if ($this->form_validation->run() === FALSE) {
@@ -100,6 +115,7 @@ class Users extends CI_Controller {
     }
 
     private function post_edit_update() {
+        $this->verify_admin();
         $data = array(
             'first_name' => $this->input->post('first_name'),
             'last_name' => $this->input->post('last_name'),
@@ -200,14 +216,15 @@ class Users extends CI_Controller {
                 $color = 'red';
             }
         }
-        $data = array(
+        $sql_data = array(
             'egn' => $egn,
             'user_id' => $user_id,
             'ip_addr' => $ip_addr,
         );
-        $this->egn_model->add($data);
+        $this->egn_model->add($sql_data);
         $this->session->set_flashdata('msg', $msg);
         $this->session->set_flashdata('color', $color);
+        $this->session->set_userdata('egn', $egn);
         redirect('/users/');
     }
 

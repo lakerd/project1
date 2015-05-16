@@ -4,9 +4,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 <br />
 
+<?php if (isset($pagination)): ?>
 <center>
     <?php echo $pagination; ?>
 </center>
+<?php endif; ?>
 
 <table align="center" border="1">
     <tr>
@@ -25,6 +27,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 <?php endforeach; ?>
 </table>
 
+<?php if (isset($pagination)): ?>
 <center>
     <?php echo $pagination; ?>
 </center>
+<?php endif; ?>

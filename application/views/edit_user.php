@@ -6,7 +6,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 
 <?php echo form_open('users/post_edit'); ?>
-<?php 
+<?php
     if ($this->session->flashdata('msg')) {
         echo '<p style="color:red">', $this->session->flashdata('msg'), '</p>';
     }
@@ -61,5 +61,15 @@ defined('BASEPATH') OR exit('No direct script access allowed');
     </tr>
 </table>
 <input type="hidden" name="form" value="edit" />
+</form>
+
+<br />
+<?php echo form_open('users/post_delete'); ?>
+    <table>
+        <tr>
+            <td><input type="submit" name="remove" value="Изтрий този потребител" /></td>
+            <td><input type="hidden" name="id" value="<?= $user->id; ?>" /></td>
+        </tr>
+    </table>
 </form>
 <?php endif; ?>
