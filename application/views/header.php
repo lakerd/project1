@@ -10,7 +10,9 @@
             echo '<br />';
             echo anchor('users/create', 'Създаване на нов потребител');
             echo '<br />';
-            echo anchor('users/edit', 'Променя на потребител');
+            echo anchor('users/edit', 'Промяна на потребител');
+            echo '<br />';
+            echo anchor('/log', 'Лог на търсенията');
             echo '<br />';
         }
         echo anchor('users/logout', 'Изход');

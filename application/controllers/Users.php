@@ -8,8 +8,8 @@ class Users extends CI_Controller {
     }
 
     public function index() {
-        $user = $this->session->user;
-        if ($user) {
+        if ($this->session->user) {
+            $user = $this->session->user;
             $view = $user->is_admin ? 'admin' : 'user';
             $cap = $this->create_captcha();
             $data['user'] = $user;
@@ -49,14 +49,10 @@ class Users extends CI_Controller {
         }
     }
 
-    public function edit($username) {
+    public function edit() {
         $this->verify_admin();
-        $user = $this->users_model->find_by_name($username);
-        if ($user === NULL)
-            show_404();
-        $data['user'] = $user;
         $this->load->view('header');
-        $this->load->view('edit_user', $data);
+        $this->load->view('edit_user');
         $this->load->view('footer');
     }
 
@@ -67,23 +63,64 @@ class Users extends CI_Controller {
 
     public function post_edit() {
         $this->verify_admin();
+        $form = $this->input->post('form');
+        if (!$form)
+            show_404();
+        if ($form === 'search') {
+            $this->post_edit_search();
+        } else if ($form === 'edit') {
+            $this->post_edit_update();
+        } else {
+            throw new Exception("unknown form");
+        }
+    }
+
+    private function post_edit_search() {
+        $this->form_validation->set_rules('username', 'Потребителско име',
+            'required');
+        if ($this->form_validation->run() === FALSE) {
+            $this->load->view('header');
+            $this->load->view('edit_user');
+            $this->load->view('footer');
+        } else {
+            $name = $this->input->post('username');
+            $user = $this->users_model->find_by_name($name);
+            $data = array();
+            if ($user === NULL) {
+                $data['username'] = $this->input->post('username');
+                $this->session->set_flashdata('msg', 'Потребителят "' . htmlspecialchars($name) . '" не съществува.');
+            } else {
+                $data['user'] = $user;
+                $data['username'] = $user->username;
+            }
+            $this->load->view('header');
+            $this->load->view('edit_user', $data);
+            $this->load->view('footer');
+        }
+    }
+
+    private function post_edit_update() {
         $data = array(
-            'id' => intval($this->input->post('id')),
             'first_name' => $this->input->post('first_name'),
             'last_name' => $this->input->post('last_name'),
             'username' => $this->input->post('username'),
             'is_admin' => intval($this->input->post('is_admin')),
             'occupation' => $this->input->post('occupation'),
             'city' => $this->input->post('city'),
-            'employee' => $this->input->post('employee')
+            'employee' => $this->input->post('employee'),
+            'modified_by' => $this->session->user->id
         );
-        if (!$this->db->replace('users', $data)) {
-            $this->session->flashdata('msg', 'Грешка! Потребителят не можа да бъде обновен.');
-            redirect('/users/edit/' + $username);
+        $id = intval($this->input->post('id'));
+        if (!$this->users_model->update($id, $data)) {
+            $this->session->set_flashdata('msg', 'Грешка! Потребителят не можа да бъде обновен.');
         } else {
-            $this->session->flashdata('msg', 'Потребителят беше обновен успешно.');
-            redirect('/users/');
+            $this->session->set_flashdata('msg', 'Потребителят беше обновен успешно.');
         }
+
+        $data['username'] = $this->input->post('username');
+        $this->load->view('header');
+        $this->load->view('edit_user', $data);
+        $this->load->view('footer');
     }
 
     public function create() {
@@ -106,7 +143,22 @@ class Users extends CI_Controller {
         if ($this->form_validation->run() === FALSE) {
             $this->create();
         } else {
-            $this->session->set_flashdata('msg', 'Потребителят беше създаден успешно.');
+            $data = array(
+                'first_name' => $this->input->post('first_name')
+                , 'last_name' => $this->input->post('last_name')
+                , 'is_admin' => intval($this->input->post('is_admin'))
+                , 'username' => $this->input->post('username')
+                , 'password' => sha1($this->input->post('password'))
+                , 'occupation' => $this->input->post('occupation')
+                , 'city' => $this->input->post('city')
+                , 'employee' => $this->input->post('employee')
+                , 'modified_by' => $this->session->user->id
+            );
+            if ($this->users_model->create($data, $this->session->user->id)) {
+                $this->session->set_flashdata('msg', 'Потребителят беше създаден успешно.');
+            } else {
+                $this->session->set_flashdata('msg', 'cannot create user');
+            }
             redirect('/users/');
         }
     }

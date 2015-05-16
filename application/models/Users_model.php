@@ -22,4 +22,21 @@ class Users_model extends CI_Model {
             return $q->row();
         return NULL;
     }
+
+    public function update($id, $data) {
+        $this->db->where('id', $id);
+        $this->db->set('modified_at', 'NOW()', FALSE);
+        return $this->db->update('users', $data);
+    }
+
+    public function create($data) {
+        $this->db->set('modified_at', 'NOW()', FALSE);
+        $this->db->set('created_at', 'NOW()', FALSE);
+        return $this->db->insert('users', $data);
+    }
+
+    public function remove($id) {
+        $this->db->where('id', $id);
+        return $this->db->delete('users');
+    }
 }

@@ -18,4 +18,22 @@ class Egn_model extends CI_Model {
         $this->db->set('created_on', 'NOW()', FALSE);
         $this->db->insert('egn_log', $data);
     }
+
+    public function all($offset = 0, $limit = 20) {
+        $q = $this->db
+            ->join('users', 'users.id = egn_log.user_id')
+            ->limit($offset, $limit)
+            ->order_by('created_on', 'DESC')
+            ->get('egn_log');
+        $ret = array();
+        foreach ($q->result() as $row) {
+            $ret[] = $row;
+        }
+        return $ret;
+    }
+
+    public function total_count() {
+        $q = $this->db->select('egn')->get('egn_log');
+        return $q->num_rows();
+    }
 }

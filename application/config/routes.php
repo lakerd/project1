@@ -50,6 +50,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 |		my-controller/my-method	-> my_controller/my_method
 */
 $route['users'] = 'users';
+$route['log'] = 'EgnLog';
+$route['log/(:num)'] = 'EgnLog/index/$1';
 $route['default_controller'] = 'users';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
