@@ -19,6 +19,21 @@ class Egn_model extends CI_Model {
         $this->db->insert('egn_log', $data);
     }
 
+    public function add_unique($data) {
+        $user_id = $data['user_id'];
+        $q = $this->db->select('egn')
+            ->where('user_id', $user_id)
+            ->where('created_on' <= 'NOW() - INTERVAL 3 DAY', FALSE)
+            ->get('egn_log');
+
+        if ($q->num_rows() > 0)
+            return FALSE;
+
+        $this->db->set('created_on', 'NOW()', FALSE);
+        $this->db->insert('egn_log', $data);
+        return TRUE;
+    }
+
     public function all($offset = 0, $limit = 20) {
         $q = $this->db
             ->join('users', 'users.id = egn_log.user_id')

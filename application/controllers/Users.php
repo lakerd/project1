@@ -221,7 +221,7 @@ class Users extends CI_Controller {
             'user_id' => $user_id,
             'ip_addr' => $ip_addr,
         );
-        $this->egn_model->add($sql_data);
+        $this->egn_model->add_unique($sql_data);
         $this->session->set_flashdata('msg', $msg);
         $this->session->set_flashdata('color', $color);
         $this->session->set_userdata('egn', $egn);
